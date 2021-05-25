@@ -105,10 +105,9 @@ int main()
   program.Link();
   program.Use();
 
-  GLuint image_texture;
-  glGenTextures(1, &image_texture);
-  glBindTexture(GL_TEXTURE_2D, image_texture);
-  glUniform1i(program.GetUniformLocation("image_texture").m_location, 0);
+  gl::Texture image_texture;
+  image_texture.Bind(GL_TEXTURE_2D);
+  program.GetUniformLocation("image_texture").Uniform1i(0);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

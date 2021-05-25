@@ -56,6 +56,29 @@ namespace gl
     }
   };
 
+  struct Texture
+  {
+    GLuint m_id;
+
+    Texture(const Texture&) = delete;
+    Texture& operator=(const Texture&) = delete;
+
+    Texture()
+    {
+      glGenTextures(1, &m_id);
+    }
+
+    ~Texture()
+    {
+      glDeleteTextures(1, &m_id);
+    }
+
+    void Bind(GLenum target)
+    {
+      glBindTexture(target, m_id);
+    }
+  };
+
   struct Shader
   {
     GLuint m_id;
@@ -111,6 +134,11 @@ namespace gl
     void Matrix4fv(GLsizei count, GLboolean transpose, GLfloat *data)
     {
       glUniformMatrix4fv(m_location, count, transpose, data);
+    }
+
+    void Uniform1i(GLint value)
+    {
+      glUniform1i(m_location, value);
     }
   };
 
