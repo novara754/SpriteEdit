@@ -1,14 +1,12 @@
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
 #include <iostream>
-
 #include "common.h"
 #include "gl.h"
+#include "ui.h"
 
 constexpr int DEF_WIN_WIDTH = 800;
 constexpr int DEF_WIN_HEIGHT = 600;
 constexpr std::string_view WIN_TITLE = "SpriteEdit";
-const ImVec4 BACKGROUND_COLOR(0.8f, 0.8f, 0.8f, 1.0f);
+const ImVec4 BACKGROUND_COLOR(0.2f, 0.2f, 0.2f, 1.0f);
 
 constexpr const char * VERTEX_SHADER_SOURCE = R"glsl(
   #version 150 core
@@ -115,8 +113,16 @@ int main()
 
   auto zoomUniform = program.GetUniformLocation("zoom");
 
+  ui::UIState ui_state(window);
+
+  ImVec4 primary_color(0.0f, 0.0f, 0.0f, 1.0f);
+  ImVec4 secondary_color(1.0f, 1.0f, 1.0f, 1.0f);
+
   while (!glfwWindowShouldClose(window))
   {
+    int win_width, win_height;
+    glfwGetWindowSize(window, &win_width, &win_height);
+
     glfwPollEvents();
     glClearColor(BACKGROUND_COLOR.x, BACKGROUND_COLOR.y, BACKGROUND_COLOR.z, BACKGROUND_COLOR.w);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -125,6 +131,8 @@ int main()
     zoomUniform.Matrix4fv(1, GL_FALSE, glm::value_ptr(zoom));
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    ui_state.Render();
 
     glfwSwapBuffers(window);
   }
