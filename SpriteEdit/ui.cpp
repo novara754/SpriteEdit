@@ -4,7 +4,6 @@
 #include <commdlg.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
-#include <sail-c++/sail-c++.h>
 
 namespace ui
 {
@@ -69,20 +68,19 @@ namespace ui
     {
       sail::image_writer writer;
       sail::image_reader reader;
-      sail::image new_image;
-      reader.read(file_path, &new_image);
-      new_image.convert(SAIL_PIXEL_FORMAT_BPP24_RGB);
+      reader.read(file_path, &m_current_image);
+      m_current_image.convert(SAIL_PIXEL_FORMAT_BPP24_RGB);
 
       glTexImage2D(
         GL_TEXTURE_2D,
         0,
         GL_RGB,
-        new_image.width(),
-        new_image.height(),
+        m_current_image.width(),
+        m_current_image.height(),
         0,
         GL_RGB,
         GL_UNSIGNED_BYTE,
-        new_image.pixels()
+        m_current_image.pixels()
       );
     }
   }

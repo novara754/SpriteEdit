@@ -8,7 +8,7 @@ constexpr int DEF_WIN_HEIGHT = 600;
 constexpr std::string_view WIN_TITLE = "SpriteEdit";
 const ImVec4 BACKGROUND_COLOR(0.2f, 0.2f, 0.2f, 1.0f);
 
-constexpr const char * VERTEX_SHADER_SOURCE = R"glsl(
+constexpr const char* VERTEX_SHADER_SOURCE = R"glsl(
   #version 150 core
   
   in vec2 position;
@@ -16,16 +16,17 @@ constexpr const char * VERTEX_SHADER_SOURCE = R"glsl(
 
   out vec2 tex_coord;
 
+  uniform mat4 scale;
   uniform mat4 zoom;
 
   void main()
   {
     tex_coord = in_tex_coord;
-    gl_Position = zoom * vec4(position, 0.0, 1.0);
+    gl_Position = zoom * scale * vec4(position, 0.0, 1.0);
   }
 )glsl";
 
-constexpr const char * FRAGMENT_SHADER_SOURCE = R"glsl(
+constexpr const char* FRAGMENT_SHADER_SOURCE = R"glsl(
   #version 150 core
 
   in vec2 tex_coord;
@@ -40,21 +41,21 @@ constexpr const char * FRAGMENT_SHADER_SOURCE = R"glsl(
   }
 )glsl";
 
-float scale = 0.8f;
+float zoom_factor = 0.8f;
 
 void ScrollCallback(GLFWwindow* window, double x_offset, double y_offset)
 {
   (void)x_offset;
-  
+
   if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
   {
     if (y_offset > 0.0)
-      scale *= 1.1f;
+      zoom_factor *= 1.1f;
     else
-      scale *= 0.9f;
+      zoom_factor *= 0.9f;
 
-    if (scale > 60.0f)
-      scale = 60.0f;
+    if (zoom_factor > 60.0f)
+      zoom_factor = 60.0f;
   }
 }
 
@@ -79,8 +80,8 @@ int main()
   vao.Bind();
 
   std::array<GLfloat, 20> vertices{
-     1.0f,  1.0f, 0.0f, 0.0f, 
-     1.0f, -1.0f, 0.0f, 1.0f, 
+     1.0f,  1.0f, 0.0f, 0.0f,
+     1.0f, -1.0f, 0.0f, 1.0f,
     -1.0f, -1.0f, 1.0f, 1.0f,
     -1.0f,  1.0f, 1.0f, 0.0f,
   };
@@ -121,6 +122,7 @@ int main()
   colorAttribute.SetPointer(2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 2 * sizeof(GLfloat));
   colorAttribute.Enable();
 
+  auto scaleUniform = program.GetUniformLocation("scale");
   auto zoomUniform = program.GetUniformLocation("zoom");
 
   ui::UIState ui_state(window);
@@ -132,15 +134,47 @@ int main()
   {
     glfwPollEvents();
 
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    glViewport(0, 0, width, height);
+    int win_width, win_height;
+    glfwGetFramebufferSize(window, &win_width, &win_height);
+    glViewport(0, 0, win_width, win_height);
 
     glClearColor(BACKGROUND_COLOR.x, BACKGROUND_COLOR.y, BACKGROUND_COLOR.z, BACKGROUND_COLOR.w);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    auto zoom = glm::scale(glm::vec3(scale, scale, 1.0f));
+    // The following code adjusts the scale of the image rendering plane
+    // to fit the currently loaded image and also adjusts the scale based on the 
+    // aspect ratio of the window.
+    //
+    // First the window's aspect ratio:
+    // If the window is wider than it is high `win_width_scale` will be between `0.0` and `1.0`
+    // this way the image rendering plane will be shrunk horizontally to adjust for the stretching of the window.
+    // The same thing applies to `win_height_scale` in the vertical direction.
+    auto win_width_f = static_cast<float>(win_width);
+    auto win_height_f = static_cast<float>(win_height);
+    auto win_width_scale = win_height_f / std::max(win_width_f, win_height_f);
+    auto win_height_scale = win_width_f / std::max(win_width_f, win_height_f);
+    // Now the image's aspect ratio:
+    // In order for the image's bigger dimension to span the entire range of `(-1.0, 1.0)` in OpenGL coordinates
+    // the image rendering pane will be shrunk in the direction of the image's smaller dimension.
+    // For example:
+    // When the image is wider than it is high the X-coordinates will span from `-1.0` to `1.0` because
+    // `image_width_scale` will be `1.0`. Meanwhile `image_height_scale` will end up between `0.0` and `1.0`
+    // and thus the image rendering plane will be shrunk in the vertical direction to maintain the right aspect ratio.
+    auto image_width = static_cast<float>(ui_state.m_current_image.width());
+    auto image_height = static_cast<float>(ui_state.m_current_image.height());
+    auto image_width_scale = image_width / std::max(image_width, image_height);
+    auto image_height_scale = image_height / std::max(image_width, image_height);
+    // Now to package both scaling factors into a basic scaling matrix to be applied by the vertex shader.
+    auto scale = glm::scale(glm::vec3(
+      image_width_scale * win_width_scale,
+      image_height_scale * win_height_scale,
+      1.0f
+    ));
+    scaleUniform.Matrix4fv(1, GL_FALSE, glm::value_ptr(scale));
+
+    auto zoom = glm::scale(glm::vec3(zoom_factor, zoom_factor, 1.0f));
     zoomUniform.Matrix4fv(1, GL_FALSE, glm::value_ptr(zoom));
+
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     ui_state.Render();
