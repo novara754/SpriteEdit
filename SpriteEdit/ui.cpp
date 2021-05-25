@@ -36,6 +36,8 @@ namespace ui
       {
         if (ImGui::MenuItem("Open...", "Ctrl+O"))
           OpenFile();
+        if (ImGui::MenuItem("Save", "Ctrl+S"))
+          SaveFile();
         ImGui::EndMenu();
       }
 
@@ -64,6 +66,7 @@ namespace ui
     open_file_name.lpstrFile = file_path;
     if (GetOpenFileNameA(&open_file_name))
     {
+      m_open_file_path = file_path;
       m_current_image.ReadNewImage(file_path);
 
       glTexImage2D(
@@ -80,12 +83,23 @@ namespace ui
     }
   }
 
+  void UIState::SaveFile()
+  {
+    m_current_image.Save(m_open_file_path);
+  }
+
   void Image::ReadNewImage(std::string_view file_path)
   {
     sail::image_writer writer;
     sail::image_reader reader;
     reader.read(file_path, &m_image);
     m_image.convert(SAIL_PIXEL_FORMAT_BPP24_RGB);
+  }
+
+  void Image::Save(std::string_view file_path)
+  {
+    sail::image_writer writer;
+    writer.write(file_path, m_image);
   }
 
   void Image::SetPixel(int y, int x, ImVec4 color)

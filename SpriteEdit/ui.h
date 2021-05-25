@@ -11,7 +11,9 @@ namespace ui
 
   public:
     void ReadNewImage(std::string_view file_path);
+    void Save(std::string_view file_path);
     void SetPixel(int y, int x, ImVec4 color);
+
     unsigned int Width() const;
     unsigned int Height() const;
     const void* Pixels() const;
@@ -19,6 +21,7 @@ namespace ui
 
   struct UIState
   {
+    std::string m_open_file_path;
     Image m_current_image;
 
     ImVec4 m_primary_color{0.0f, 0.0f, 0.0f, 1.0f};
@@ -30,5 +33,6 @@ namespace ui
 
   private:
     void OpenFile();
+    void SaveFile();
   };
 }
