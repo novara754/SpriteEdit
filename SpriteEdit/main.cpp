@@ -120,16 +120,17 @@ int main()
 
   while (!glfwWindowShouldClose(window))
   {
-    int win_width, win_height;
-    glfwGetWindowSize(window, &win_width, &win_height);
-
     glfwPollEvents();
+
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    glViewport(0, 0, width, height);
+
     glClearColor(BACKGROUND_COLOR.x, BACKGROUND_COLOR.y, BACKGROUND_COLOR.z, BACKGROUND_COLOR.w);
     glClear(GL_COLOR_BUFFER_BIT);
 
     auto zoom = glm::scale(glm::vec3(scale, scale, 1.0f));
     zoomUniform.Matrix4fv(1, GL_FALSE, glm::value_ptr(zoom));
-
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     ui_state.Render();
