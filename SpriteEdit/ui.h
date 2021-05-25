@@ -13,5 +13,6 @@ namespace ui
     ~UIState();
 
     void Render();
+    void OpenFile();
   };
 }

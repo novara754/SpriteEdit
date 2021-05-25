@@ -1,11 +1,14 @@
 #include "ui.h"
 
+#include <Windows.h>
+#include <commdlg.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <sail-c++/sail-c++.h>
 
 namespace ui
 {
-  UIState::UIState(GLFWwindow *window)
+  UIState::UIState(GLFWwindow* window)
   {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -33,7 +36,7 @@ namespace ui
       if (ImGui::BeginMenu("File"))
       {
         if (ImGui::MenuItem("Open...", "Ctrl+O"))
-          spdlog::info("'Open...' was clicked");
+          OpenFile();
         ImGui::EndMenu();
       }
 
@@ -49,5 +52,38 @@ namespace ui
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+  }
+
+  void UIState::OpenFile()
+  {
+    char file_path[MAX_PATH]{};
+    OPENFILENAMEA open_file_name{};
+    open_file_name.lStructSize = sizeof(open_file_name);
+    open_file_name.hInstance = GetModuleHandle(nullptr);
+    open_file_name.hwndOwner = GetActiveWindow();
+    open_file_name.lpstrTitle = "Open...";
+    open_file_name.lpstrFilter = "PNG Files (*.png)\0*.png\0All Files (*.*)\0*.*\0";
+    open_file_name.nMaxFile = MAX_PATH;
+    open_file_name.lpstrFile = file_path;
+    if (GetOpenFileNameA(&open_file_name))
+    {
+      sail::image_writer writer;
+      sail::image_reader reader;
+      sail::image new_image;
+      reader.read(file_path, &new_image);
+      new_image.convert(SAIL_PIXEL_FORMAT_BPP24_RGB);
+
+      glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGB,
+        new_image.width(),
+        new_image.height(),
+        0,
+        GL_RGB,
+        GL_UNSIGNED_BYTE,
+        new_image.pixels()
+      );
+    }
   }
 }

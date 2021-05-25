@@ -12,15 +12,15 @@ constexpr const char * VERTEX_SHADER_SOURCE = R"glsl(
   #version 150 core
   
   in vec2 position;
-  in vec3 in_color;
+  in vec2 in_tex_coord;
 
-  out vec3 color;
+  out vec2 tex_coord;
 
   uniform mat4 zoom;
 
   void main()
   {
-    color = in_color;
+    tex_coord = in_tex_coord;
     gl_Position = zoom * vec4(position, 0.0, 1.0);
   }
 )glsl";
@@ -28,13 +28,15 @@ constexpr const char * VERTEX_SHADER_SOURCE = R"glsl(
 constexpr const char * FRAGMENT_SHADER_SOURCE = R"glsl(
   #version 150 core
 
-  in vec3 color;
+  in vec2 tex_coord;
 
   out vec4 out_color;
 
+  uniform sampler2D image_texture;
+
   void main()
   {
-    out_color = vec4(color, 1.0);
+    out_color = texture(image_texture, tex_coord);
   }
 )glsl";
 
@@ -77,10 +79,10 @@ int main()
   vao.Bind();
 
   std::array<GLfloat, 20> vertices{
-     1.0f,  1.0f, 1.0f, 1.0f, 1.0f,
-     1.0f, -1.0f, 1.0f, 1.0f, 1.0f,
-    -1.0f, -1.0f, 1.0f, 1.0f, 1.0f,
-    -1.0f,  1.0f, 1.0f, 1.0f, 1.0f,
+     1.0f,  1.0f, 0.0f, 0.0f, 
+     1.0f, -1.0f, 0.0f, 1.0f, 
+    -1.0f, -1.0f, 1.0f, 1.0f,
+    -1.0f,  1.0f, 1.0f, 0.0f,
   };
   gl::Buffer vbo;
   vbo.Bind(GL_ARRAY_BUFFER);
@@ -103,12 +105,21 @@ int main()
   program.Link();
   program.Use();
 
+  GLuint image_texture;
+  glGenTextures(1, &image_texture);
+  glBindTexture(GL_TEXTURE_2D, image_texture);
+  glUniform1i(program.GetUniformLocation("image_texture").m_location, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
   auto positionAttribute = program.GetAttribLocation("position");
-  positionAttribute.SetPointer(2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), 0);
+  positionAttribute.SetPointer(2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
   positionAttribute.Enable();
 
-  auto colorAttribute = program.GetAttribLocation("in_color");
-  colorAttribute.SetPointer(3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), 2 * sizeof(GLfloat));
+  auto colorAttribute = program.GetAttribLocation("in_tex_coord");
+  colorAttribute.SetPointer(2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 2 * sizeof(GLfloat));
   colorAttribute.Enable();
 
   auto zoomUniform = program.GetUniformLocation("zoom");
