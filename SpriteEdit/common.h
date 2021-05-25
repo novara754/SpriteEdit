@@ -11,12 +11,12 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-// OpenGL
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
 // UI
 #include <imgui.h>
 
 // Spdlog
 #include <spdlog/spdlog.h>
+
+// OpenGL
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
