@@ -7,7 +7,14 @@ SpriteEdit is a simple OpenGL-based sprite editor.
 ## Features
 
 - Loading existing images
+- Saving images
 - Drawing single pixels in one of two active colours (left or right click)
+
+## Controls
+
+- Left Click: Draw pixel in primary color
+- Right Click: Draw pixel in secondary color
+- Ctrl+Scroll: Zoom in and out.
 
 ## Supported platforms
 
