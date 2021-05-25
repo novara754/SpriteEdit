@@ -80,10 +80,10 @@ int main()
   vao.Bind();
 
   std::array<GLfloat, 20> vertices{
-     1.0f,  1.0f, 0.0f, 0.0f,
-     1.0f, -1.0f, 0.0f, 1.0f,
-    -1.0f, -1.0f, 1.0f, 1.0f,
-    -1.0f,  1.0f, 1.0f, 0.0f,
+    -1.0f,  1.0f, 0.0f, 0.0f, // Top left
+     1.0f,  1.0f, 1.0f, 0.0f, // Top right
+     1.0f, -1.0f, 1.0f, 1.0f, // Bottom right
+    -1.0f, -1.0f, 0.0f, 1.0f, // Bottom left
   };
   gl::Buffer vbo;
   vbo.Bind(GL_ARRAY_BUFFER);
@@ -111,8 +111,8 @@ int main()
   program.GetUniformLocation("image_texture").Uniform1i(0);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   auto positionAttribute = program.GetAttribLocation("position");
   positionAttribute.SetPointer(2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
