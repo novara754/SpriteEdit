@@ -5,17 +5,30 @@
 
 namespace ui
 {
+  class Image
+  {
+    sail::image m_image;
+
+  public:
+    void ReadNewImage(std::string_view file_path);
+    void SetPixel(int y, int x, ImVec4 color);
+    unsigned int Width() const;
+    unsigned int Height() const;
+    const void* Pixels() const;
+  };
+
   struct UIState
   {
-    sail::image m_current_image;
+    Image m_current_image;
 
     ImVec4 m_primary_color{0.0f, 0.0f, 0.0f, 1.0f};
     ImVec4 m_secondary_color{1.0f, 1.0f, 1.0f, 1.0f};
 
-    UIState(GLFWwindow* window);
-    ~UIState();
-
+    void Init(GLFWwindow* window);
+    void DeInit();
     void Render();
+
+  private:
     void OpenFile();
   };
 }

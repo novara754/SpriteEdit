@@ -7,7 +7,7 @@
 
 namespace ui
 {
-  UIState::UIState(GLFWwindow* window)
+  void UIState::Init(GLFWwindow* window)
   {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -17,7 +17,7 @@ namespace ui
     ImGui::StyleColorsDark();
   }
 
-  UIState::~UIState()
+  void UIState::DeInit()
   {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -43,10 +43,8 @@ namespace ui
     }
 
     ImGui::Begin("Color Picker");
-    ImGui::Text("Primary Color:");
-    ImGui::ColorEdit3("", reinterpret_cast<float*>(&m_primary_color));
-    ImGui::Text("Secondary Color:");
-    ImGui::ColorEdit3("", reinterpret_cast<float*>(&m_secondary_color));
+    ImGui::ColorEdit4("Primary Color", reinterpret_cast<float*>(&m_primary_color));
+    ImGui::ColorEdit4("Secondary Color", reinterpret_cast<float*>(&m_secondary_color));
     ImGui::End();
 
     ImGui::Render();
@@ -66,22 +64,59 @@ namespace ui
     open_file_name.lpstrFile = file_path;
     if (GetOpenFileNameA(&open_file_name))
     {
-      sail::image_writer writer;
-      sail::image_reader reader;
-      reader.read(file_path, &m_current_image);
-      m_current_image.convert(SAIL_PIXEL_FORMAT_BPP24_RGB);
+      m_current_image.ReadNewImage(file_path);
 
       glTexImage2D(
         GL_TEXTURE_2D,
         0,
         GL_RGB,
-        m_current_image.width(),
-        m_current_image.height(),
+        m_current_image.Width(),
+        m_current_image.Height(),
         0,
         GL_RGB,
         GL_UNSIGNED_BYTE,
-        m_current_image.pixels()
+        m_current_image.Pixels()
       );
     }
+  }
+
+  void Image::ReadNewImage(std::string_view file_path)
+  {
+    sail::image_writer writer;
+    sail::image_reader reader;
+    reader.read(file_path, &m_image);
+    m_image.convert(SAIL_PIXEL_FORMAT_BPP24_RGB);
+  }
+
+  void Image::SetPixel(int y, int x, ImVec4 color)
+  {
+    std::array new_pixel{
+      static_cast<std::uint8_t>(color.x * 255), // R
+      static_cast<std::uint8_t>(color.y * 255), // G
+      static_cast<std::uint8_t>(color.z * 255), // B
+    };
+
+    spdlog::debug("{}, {}, {}", new_pixel[0], new_pixel[1], new_pixel[2]);
+
+    auto* pixels = static_cast<std::uint8_t*>(m_image.pixels());
+    auto idx = 3 * (y * Width() + x);
+    std::copy(new_pixel.begin(), new_pixel.end(), &pixels[idx]);
+
+    glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, new_pixel.data());
+  }
+
+  unsigned int Image::Width() const
+  {
+    return m_image.width();
+  }
+
+  unsigned int Image::Height() const
+  {
+    return m_image.height();
+  }
+
+  const void* Image::Pixels() const
+  {
+    return m_image.pixels();
   }
 }
